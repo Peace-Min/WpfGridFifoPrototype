@@ -16,29 +16,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         
-        <!-- 체크박스 스타일 -->
-        <Style x:Key="ModernCheckBoxStyle" TargetType="CheckBox">
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal">
-                            <Border x:Name="box" Width="16" Height="16" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="3" Background="White">
-                                <TextBlock x:Name="check" Text="✓" Foreground="White" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
-                            </Border>
-                            <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="box" Property="Background" Value="#3B82F6"/>
-                                <Setter TargetName="box" Property="BorderBrush" Value="#3B82F6"/>
-                                <Setter TargetName="check" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+
 
         <!-- 개별 필드 슬롯 템플릿 -->
         <DataTemplate x:Key="DetailSlotTemplate">
@@ -190,10 +168,7 @@
                         <Border Margin="16,0,0,0" Background="#F1F5F9" CornerRadius="4" Padding="4,2">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="모드: " VerticalAlignment="Center" FontSize="11" Foreground="#64748B"/>
-                                <ComboBox SelectedValue="{Binding DimensionMode}" SelectedValuePath="Content" Width="60" Height="22" FontSize="11" BorderThickness="0" Background="Transparent">
-                                    <ComboBoxItem Content="2"/>
-                                    <ComboBoxItem Content="3"/>
-                                </ComboBox>
+                                <ComboBox ItemsSource="{Binding ModeOptions}" SelectedItem="{Binding DimensionMode}" Width="60" Height="22" FontSize="11" BorderThickness="0" Background="Transparent"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

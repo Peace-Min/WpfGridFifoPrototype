@@ -12,11 +12,27 @@ namespace WpfGridFifoPrototype.Models
 
     public class DetailItem : BindableBase
     {
-        public string Y { get; set; } // 데이터명
-        public string Attr { get; set; } // 속성
+        private string _y;
+        public string Y 
+        { 
+            get => _y; 
+            set 
+            { 
+                if(SetProperty(ref _y, value, nameof(Y)))
+                    RaisePropertyChanged(nameof(IsEmpty)); // Y 변경 시 IsEmpty 갱신
+            } 
+        }
+
+        private string _attr;
+        public string Attr 
+        { 
+            get => _attr; 
+            set => SetProperty(ref _attr, value, nameof(Attr)); 
+        }
+
         public bool IsEmpty => string.IsNullOrEmpty(Y);
 
-        private string _roleLabel; // X, Y, Z 등 시각적 라벨
+        private string _roleLabel;
         public string RoleLabel
         {
             get => _roleLabel;
@@ -36,11 +52,29 @@ namespace WpfGridFifoPrototype.Models
             get => _canMoveDown;
             set => SetProperty(ref _canMoveDown, value, nameof(CanMoveDown));
         }
+
+        // 데이터 초기화 및 교체를 위한 유틸리티 메서드 추가
+        public void ClearContent()
+        {
+            Y = null;
+            Attr = null;
+        }
+
+        public void AssignFrom(DetailItem source)
+        {
+            Y = source.Y;
+            Attr = source.Attr;
+        }
     }
 
     public class TargetRow : BindableBase
     {
-        public int No { get; set; }
+        private int _no;
+        public int No 
+        { 
+            get => _no; 
+            set => SetProperty(ref _no, value, nameof(No)); 
+        }
 
         private string _label = "New Target";
         public string Label
@@ -50,6 +84,12 @@ namespace WpfGridFifoPrototype.Models
         }
 
         public ObservableCollection<DetailItem> Details { get; set; } = new ObservableCollection<DetailItem>();
-        public string Color { get; set; }
+        
+        private string _color;
+        public string Color 
+        { 
+            get => _color; 
+            set => SetProperty(ref _color, value, nameof(Color)); 
+        }
     }
 }
