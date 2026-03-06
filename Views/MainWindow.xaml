@@ -201,109 +201,173 @@
                         </dxg:TableView>
                     </dxg:GridControl.View>
 
-                    <dxg:GridColumn FieldName="No" Header="순번" Width="50" HorizontalHeaderContentAlignment="Center">
-                        <dxg:GridColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Value}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#475569"/>
-                            </DataTemplate>
-                        </dxg:GridColumn.CellTemplate>
-                    </dxg:GridColumn>
+                    <dxg:GridControl.Bands>
+                        <!-- 순번 밴드 -->
+                        <dxg:GridControlBand Header=" " HorizontalHeaderContentAlignment="Center">
+                            <dxg:GridColumn FieldName="No" Header="순번" Width="50" HorizontalHeaderContentAlignment="Center">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Value}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#475569"/>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                        </dxg:GridControlBand>
 
-                    <dxg:GridColumn FieldName="Label" Header="레이블" Width="100">
-                        <dxg:GridColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Margin="4,0"/>
-                            </DataTemplate>
-                        </dxg:GridColumn.CellTemplate>
-                    </dxg:GridColumn>
-                    
-                    <dxg:GridColumn Header="할당된 필드 (동적 그룹핑)" Width="*">
-                        <dxg:GridColumn.CellTemplate>
-                            <DataTemplate>
-                                <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,2" Padding="6">
-                                                <DockPanel>
-                                                    <TextBlock DockPanel.Dock="Left" Text="{Binding RoleLabel, StringFormat='{}{0} '}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding RoleLabel}" Value="X"> <Setter Property="Foreground" Value="#3B82F6"/> </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding RoleLabel}" Value="Y"> <Setter Property="Foreground" Value="#F43F5E"/> </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding RoleLabel}" Value="Z"> <Setter Property="Foreground" Value="#10B981"/> </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource DetailSlotTemplate}"/>
-                                                </DockPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </DataTemplate>
-                        </dxg:GridColumn.CellTemplate>
-                    </dxg:GridColumn>
+                        <!-- 레이블 밴드 -->
+                        <dxg:GridControlBand Header=" " HorizontalHeaderContentAlignment="Center">
+                            <dxg:GridColumn FieldName="Label" Header="레이블" Width="100">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Margin="4,0"/>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                        </dxg:GridControlBand>
 
-                    <dxg:GridColumn FieldName="Color" Header="상태/성상" Width="100" HorizontalHeaderContentAlignment="Center">
-                        <dxg:GridColumn.CellTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,4" Padding="8,4" CornerRadius="4" HorizontalAlignment="Center" VerticalAlignment="Center" BorderThickness="1">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Value}" Value="Active">
-                                                    <Setter Property="Background" Value="#ECFDF5"/>
-                                                    <Setter Property="BorderBrush" Value="#10B981"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Value}" Value="Standby">
-                                                    <Setter Property="Background" Value="#FFF1F2"/>
-                                                    <Setter Property="BorderBrush" Value="#F43F5E"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <TextBlock Text="{Binding Value}" FontSize="11" FontWeight="SemiBold">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Value}" Value="Active">
-                                                        <Setter Property="Foreground" Value="#059669"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Value}" Value="Standby">
-                                                        <Setter Property="Foreground" Value="#E11D48"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Border>
-                            </DataTemplate>
-                        </dxg:GridColumn.CellTemplate>
-                    </dxg:GridColumn>
+                        <!-- 그룹 정보 밴드 (요청하신 부분) -->
+                        <dxg:GridControlBand Header="그룹 정보" HorizontalHeaderContentAlignment="Center">
+                            <dxg:GridColumn Header="?" Width="40" HorizontalHeaderContentAlignment="Center">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Margin="0,2" Height="26">
+                                                        <TextBlock Text="{Binding RoleLabel}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding RoleLabel}" Value="X"> <Setter Property="Foreground" Value="#3B82F6"/> </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding RoleLabel}" Value="Y"> <Setter Property="Foreground" Value="#F43F5E"/> </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding RoleLabel}" Value="Z"> <Setter Property="Foreground" Value="#10B981"/> </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                            
+                            <dxg:GridColumn Header="라벨명" Width="*">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1,1,0,1" Margin="0,2" Padding="6,0" Height="26">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Y}" FontWeight="Bold" Foreground="#1E293B" FontSize="11" Margin="0,0,8,0"/>
+                                                            <TextBlock Text="{Binding Attr}" Foreground="#64748B" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
 
-                    <!-- 로우 삭제 컬럼 -->
-                    <dxg:GridColumn Header="삭제" Width="50" HorizontalHeaderContentAlignment="Center">
-                        <dxg:GridColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="🗑" Background="Transparent" BorderThickness="0" Foreground="#94A3B8" FontSize="14"
-                                        Command="{Binding View.DataContext.DeleteTargetRowCommand}"
-                                        CommandParameter="{Binding RowData.Row}"
-                                        VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Foreground" Value="#EF4444"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                            </DataTemplate>
-                        </dxg:GridColumn.CellTemplate>
-                    </dxg:GridColumn>
+                            <dxg:GridColumn Header="단위" Width="50" HorizontalHeaderContentAlignment="Center">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="0,1,1,1" CornerRadius="0,4,4,0" Margin="0,2" Height="26">
+                                                        <Button Content="✕" Background="Transparent" BorderThickness="0" Foreground="#CBD5E1"
+                                                            Command="{Binding DataContext.RemoveDetailCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}"
+                                                            Cursor="Hand" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                        </dxg:GridControlBand>
+
+                        <!-- 상태 및 삭제 밴드 -->
+                        <dxg:GridControlBand Header=" " HorizontalHeaderContentAlignment="Center">
+                            <dxg:GridColumn FieldName="Color" Header="상태/성상" Width="100" HorizontalHeaderContentAlignment="Center">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,4" Padding="8,4" CornerRadius="4" HorizontalAlignment="Center" VerticalAlignment="Center" BorderThickness="1">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Value}" Value="Active">
+                                                            <Setter Property="Background" Value="#ECFDF5"/>
+                                                            <Setter Property="BorderBrush" Value="#10B981"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Value}" Value="Standby">
+                                                            <Setter Property="Background" Value="#FFF1F2"/>
+                                                            <Setter Property="BorderBrush" Value="#F43F5E"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Value}" FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Value}" Value="Active">
+                                                                <Setter Property="Foreground" Value="#059669"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Value}" Value="Standby">
+                                                                <Setter Property="Foreground" Value="#E11D48"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                        </dxg:GridControlBand>
+
+                        <!-- 삭제 버튼 밴드 -->
+                        <dxg:GridControlBand Header=" " HorizontalHeaderContentAlignment="Center">
+                            <dxg:GridColumn Header="삭제" Width="50" HorizontalHeaderContentAlignment="Center">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="🗑" Background="Transparent" BorderThickness="0" Foreground="#94A3B8" FontSize="14"
+                                                Command="{Binding View.DataContext.DeleteTargetRowCommand}"
+                                                CommandParameter="{Binding RowData.Row}"
+                                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                        </dxg:GridControlBand>
+                    </dxg:GridControl.Bands>
+
+
                 </dxg:GridControl>
             </DockPanel>
         </Border>

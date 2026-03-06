@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -127,29 +128,29 @@ namespace WpfGridFifoPrototype.ViewModels
             }
 
             var details = SelectedTargetRow.Details;
-            int emptyIdx = -1;
-            for (int i = 0; i < details.Count; i++)
+            
+            // 1. 빈 슬롯 우선 탐색
+            var targetSlot = details.FirstOrDefault(d => d.IsEmpty);
+            
+            // 2. 빈 곳이 없다면 타임스탬프가 가장 작은(오래된) 슬롯을 LINQ로 탐색
+            if (targetSlot == null)
             {
-                if (details[i].IsEmpty) { emptyIdx = i; break; }
+                targetSlot = details.OrderBy(d => d.InsertTimestamp).First();
             }
 
-            if (emptyIdx != -1)
-            {
-                // 인스턴스를 갈아끼우지 않고 내부 속성 교체로 MVVM 성능 유지
-                details[emptyIdx].Y = source.Name;
-                details[emptyIdx].Attr = source.Attr;
-            }
-            else
-            {
-                // FIFO 처리 (인스턴스 유지 후 데이터 Shift Up 처리)
-                for (int i = 0; i < details.Count - 1; i++)
-                {
-                    details[i].AssignFrom(details[i + 1]);
-                }
-                details[details.Count - 1].Y = source.Name;
-                details[details.Count - 1].Attr = source.Attr;
-            }
+            // 3. 찾은 슬롯에 데이터 반영
+            UpdateSlot(targetSlot, source);
             UpdateRoleAndStatus(SelectedTargetRow);
+        }
+
+        private void UpdateSlot(DetailItem item, SourceItem source)
+        {
+            // 방어 로직: 기존 값과 완전히 동일하면 불필요한 갱신 방지
+            if (item.Y == source.Name && item.Attr == source.Attr) return;
+
+            item.Y = source.Name;
+            item.Attr = source.Attr;
+            item.InsertTimestamp = DateTime.Now.Ticks;
         }
 
         private void MoveItem(DetailItem item, int direction)
@@ -168,12 +169,15 @@ namespace WpfGridFifoPrototype.ViewModels
                 // 새로운 인스턴스를 만들지 않고 내부 데이터만 안전하게 교환(Swap)
                 string tempY = targetSlot.Y;
                 string tempAttr = targetSlot.Attr;
+                long tempTimestamp = targetSlot.InsertTimestamp;
 
                 targetSlot.Y = item.Y;
                 targetSlot.Attr = item.Attr;
+                targetSlot.InsertTimestamp = item.InsertTimestamp;
 
                 item.Y = tempY;
                 item.Attr = tempAttr;
+                item.InsertTimestamp = tempTimestamp;
             }
         }
 

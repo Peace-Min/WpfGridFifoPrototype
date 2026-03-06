@@ -53,17 +53,26 @@ namespace WpfGridFifoPrototype.Models
             set => SetProperty(ref _canMoveDown, value, nameof(CanMoveDown));
         }
 
+        private long _insertTimestamp;
+        public long InsertTimestamp
+        {
+            get => _insertTimestamp;
+            set => SetProperty(ref _insertTimestamp, value, nameof(InsertTimestamp));
+        }
+
         // 데이터 초기화 및 교체를 위한 유틸리티 메서드 추가
         public void ClearContent()
         {
             Y = null;
             Attr = null;
+            InsertTimestamp = 0; // 타임스탬프 리셋
         }
 
         public void AssignFrom(DetailItem source)
         {
             Y = source.Y;
             Attr = source.Attr;
+            InsertTimestamp = source.InsertTimestamp; // 타임스탬프 원본 유지
         }
     }
 
