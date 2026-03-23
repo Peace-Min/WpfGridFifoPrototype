@@ -10,7 +10,13 @@
 
         <Style x:Key="TargetRowStyle" TargetType="dxg:RowControl">
             <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource Self}}" Value="{x:Static dxg:SelectionState.Focused}">
+                    <Setter Property="Background" Value="#F8FAFC" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource Self}}" Value="{x:Static dxg:SelectionState.Selected}">
+                    <Setter Property="Background" Value="#F8FAFC" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource Self}}" Value="{x:Static dxg:SelectionState.FocusedAndSelected}">
                     <Setter Property="Background" Value="#F8FAFC" />
                 </DataTrigger>
             </Style.Triggers>
@@ -21,7 +27,15 @@
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="1" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="True">
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.Focused}">
+                    <Setter Property="Background" Value="#ECFDF5" />
+                    <Setter Property="BorderBrush" Value="#BBF7D0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.Selected}">
+                    <Setter Property="Background" Value="#ECFDF5" />
+                    <Setter Property="BorderBrush" Value="#BBF7D0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.FocusedAndSelected}">
                     <Setter Property="Background" Value="#ECFDF5" />
                     <Setter Property="BorderBrush" Value="#BBF7D0" />
                 </DataTrigger>
@@ -34,7 +48,15 @@
             <Setter Property="Background" Value="White" />
             <Setter Property="Opacity" Value="1" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="True">
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.Focused}">
+                    <Setter Property="Background" Value="#F0FDF4" />
+                    <Setter Property="BorderBrush" Value="#BBF7D0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.Selected}">
+                    <Setter Property="Background" Value="#F0FDF4" />
+                    <Setter Property="BorderBrush" Value="#BBF7D0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.FocusedAndSelected}">
                     <Setter Property="Background" Value="#F0FDF4" />
                     <Setter Property="BorderBrush" Value="#BBF7D0" />
                 </DataTrigger>
