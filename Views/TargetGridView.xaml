@@ -140,13 +140,13 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
-                                                <dxmvvm:Interaction.Behaviors>
-                                                    <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
-                                                                           Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                           CommandParameter="{Binding}" />
-                                                </dxmvvm:Interaction.Behaviors>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBox Text="{Binding RoleLabel}" IsReadOnly="True" Background="Transparent" BorderBrush="Transparent" Padding="7,3">
+                                                        <dxmvvm:Interaction.Behaviors>
+                                                            <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                                   Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                                   CommandParameter="{Binding}" />
+                                                        </dxmvvm:Interaction.Behaviors>
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox">
                                                                 <Style.Triggers>
@@ -198,12 +198,13 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
-                                                <dxmvvm:Interaction.Behaviors>
-                                                    <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
-                                                                           Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                           CommandParameter="{Binding}" />
-                                                </dxmvvm:Interaction.Behaviors>
-                                                <TextBox Text="{Binding ObjectLabel}" Background="Transparent" BorderBrush="Transparent" TextAlignment="Left" IsReadOnly="True" />
+                                                <TextBox Text="{Binding ObjectLabel}" Background="Transparent" BorderBrush="Transparent" TextAlignment="Left" IsReadOnly="True">
+                                                    <dxmvvm:Interaction.Behaviors>
+                                                        <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                               Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                               CommandParameter="{Binding}" />
+                                                    </dxmvvm:Interaction.Behaviors>
+                                                </TextBox>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -219,12 +220,13 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
-                                                <dxmvvm:Interaction.Behaviors>
-                                                    <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
-                                                                           Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                           CommandParameter="{Binding}" />
-                                                </dxmvvm:Interaction.Behaviors>
-                                                <TextBox Text="{Binding AttributeLabel}" Background="Transparent" BorderBrush="Transparent" TextAlignment="Left" IsReadOnly="True" />
+                                                <TextBox Text="{Binding AttributeLabel}" Background="Transparent" BorderBrush="Transparent" TextAlignment="Left" IsReadOnly="True">
+                                                    <dxmvvm:Interaction.Behaviors>
+                                                        <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                               Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                               CommandParameter="{Binding}" />
+                                                    </dxmvvm:Interaction.Behaviors>
+                                                </TextBox>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -240,13 +242,14 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
-                                                <dxmvvm:Interaction.Behaviors>
-                                                    <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
-                                                                           Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                           CommandParameter="{Binding}" />
-                                                </dxmvvm:Interaction.Behaviors>
                                                 <Grid>
-                                                    <TextBlock Text="{Binding DisplayUnit}" Margin="10,0,24,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding DisplayUnit}" Margin="10,0,24,0" VerticalAlignment="Center">
+                                                        <dxmvvm:Interaction.Behaviors>
+                                                            <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                                   Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                                   CommandParameter="{Binding}" />
+                                                        </dxmvvm:Interaction.Behaviors>
+                                                    </TextBlock>
                                                     <Button Content="✕"
                                                             Cursor="Hand"
                                                             Margin="0"

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Media;
 using DevExpress.Mvvm;
 using WpfGridFifoPrototype.Models;
 using WpfGridFifoPrototype.PrototypeSupport;
@@ -11,6 +12,7 @@ namespace WpfGridFifoPrototype.ViewModels
 {
     public class TargetGridViewModel : ViewModelBase
     {
+        #region Construction
         private readonly ChartColorService _chartColorService = new ChartColorService();
         private readonly string[] _roleLabels = { "X", "Y", "Z" };
         private bool _isUpdatingSelection;
@@ -18,10 +20,13 @@ namespace WpfGridFifoPrototype.ViewModels
 
         public TargetGridViewModel()
         {
-            Initialize();
+            InitializeCommands();
+            InitializeState();
             AddTargetRow();
         }
+        #endregion
 
+        #region State
         public int DimensionMode
         {
             get => _dimensionMode;
@@ -69,13 +74,15 @@ namespace WpfGridFifoPrototype.ViewModels
 
                 SetSelectedDetailCore(value);
 
-                if (_isUpdatingSelection)
+                if (_isUpdatingSelection || value == null)
                     return;
 
                 _isUpdatingSelection = true;
                 try
                 {
-                    SelectedTargetRow = FindOwnerRow(value);
+                    var ownerRow = FindOwnerRow(value);
+                    if (ownerRow != null)
+                        SelectedTargetRow = ownerRow;
                 }
                 finally
                 {
@@ -93,19 +100,177 @@ namespace WpfGridFifoPrototype.ViewModels
         public ObservableCollection<TargetRow> TargetRows
         {
             get => GetValue<ObservableCollection<TargetRow>>();
-            set => SetValue(value);
+            private set => SetValue(value);
+        }
+        
+        public DelegateCommand AddTargetRowCommand { get; private set; }
+
+        public DelegateCommand RemoveSelectedTargetRowCommand { get; private set; }
+
+        public DelegateCommand ClearSelectedDetailCommand { get; private set; }
+
+        public DelegateCommand<TargetRow> DeleteTargetRowCommand { get; private set; }
+
+        public DelegateCommand<DetailItem> RemoveDetailCommand { get; private set; }
+
+        public DelegateCommand<DetailItem> MoveDetailUpCommand { get; private set; }
+
+        public DelegateCommand<DetailItem> MoveDetailDownCommand { get; private set; }
+
+        public DelegateCommand<DetailItem> SelectDetailCommand { get; private set; }
+        #endregion
+
+        #region Public API
+        public void AddTargetRow()
+        {
+            int nextNo = TargetRows.Any() ? TargetRows.Max(targetRow => targetRow.No) + 1 : 1;
+            string groupTitle = $"New Group {nextNo}";
+            var row = CreateTargetRow(nextNo, groupTitle);
+
+            TargetRows.Add(row);
+            SelectTargetRow(row);
         }
 
-        public DelegateCommand AddTargetRowCommand => new DelegateCommand(AddTargetRow);
-        public DelegateCommand RemoveSelectedTargetRowCommand => new DelegateCommand(RemoveSelectedTargetRow);
-        public DelegateCommand ClearSelectedDetailCommand => new DelegateCommand(ClearSelectedDetail);
-        public DelegateCommand<TargetRow> DeleteTargetRowCommand => new DelegateCommand<TargetRow>(DeleteTargetRow);
-        public DelegateCommand<DetailItem> RemoveDetailCommand => new DelegateCommand<DetailItem>(RemoveDetail);
-        public DelegateCommand<DetailItem> MoveDetailUpCommand => new DelegateCommand<DetailItem>(MoveDetailUp);
-        public DelegateCommand<DetailItem> MoveDetailDownCommand => new DelegateCommand<DetailItem>(MoveDetailDown);
-        public DelegateCommand<DetailItem> SelectDetailCommand => new DelegateCommand<DetailItem>(SelectDetail);
+        public void UpdateTargetRow(
+            TargetRow row,
+            string groupTitle = null,
+            Color? color = null,
+            LineSeriesType? lineSeriesType = null)
+        {
+            var targetRow = row ?? SelectedTargetRow;
+            if (targetRow == null || !TargetRows.Contains(targetRow))
+                return;
 
-        private void Initialize()
+            if (groupTitle != null)
+                targetRow.GroupTitle = groupTitle;
+
+            if (color.HasValue)
+                targetRow.Color = color.Value;
+
+            if (lineSeriesType.HasValue)
+                targetRow.LineSeriesType = lineSeriesType.Value;
+        }
+
+        public void RemoveSelectedTargetRow()
+        {
+            RemoveTargetRow(SelectedTargetRow);
+        }
+
+        public void RemoveTargetRow(TargetRow row)
+        {
+            if (row == null || !TargetRows.Contains(row))
+                return;
+
+            bool removedSelectedRow = ReferenceEquals(SelectedTargetRow, row);
+            bool removedSelectedDetail = SelectedDetail != null && row.Details.Contains(SelectedDetail);
+
+            TargetRows.Remove(row);
+
+            if (!removedSelectedRow && !removedSelectedDetail)
+                return;
+
+            SelectedTargetRow = TargetRows.FirstOrDefault();
+            if (SelectedTargetRow == null)
+                SetSelectedDetailCore(null);
+        }
+
+        public void SelectTargetRow(TargetRow row)
+        {
+            if (row == null || !TargetRows.Contains(row))
+                return;
+
+            SelectedTargetRow = row;
+        }
+
+        public void AddToTarget(UserAnalItemData source)
+        {
+            AddOrReplaceDetailFromSource(source);
+        }
+
+        public void UpdateDetail(DetailItem detail, UserAnalItemData source)
+        {
+            if (detail == null || source == null)
+                return;
+
+            detail.UpdateFromSource(source);
+
+            var ownerRow = FindOwnerRow(detail);
+            if (ownerRow != null)
+                UpdateRoleAndStatus(ownerRow);
+        }
+
+        public void RemoveSelectedDetail()
+        {
+            ClearDetailCore(SelectedDetail, clearSelectionAfter: true);
+        }
+
+        public void RemoveDetail(DetailItem detail)
+        {
+            ClearDetailCore(detail, clearSelectionAfter: ReferenceEquals(SelectedDetail, detail));
+        }
+
+        public void MoveDetail(DetailItem detail, int direction)
+        {
+            MoveDetailCore(detail, direction);
+        }
+
+        public void SelectDetail(DetailItem detail)
+        {
+            if (detail == null)
+                return;
+
+            SelectedDetail = detail;
+        }
+
+        public void ClearSelectedDetail()
+        {
+            SetSelectedDetailCore(null);
+        }
+
+        public bool ValidateAssignments(out string errorMsg)
+        {
+            errorMsg = string.Empty;
+
+            foreach (var row in TargetRows)
+            {
+                foreach (var detail in row.Details)
+                {
+                    if (!detail.IsEmpty)
+                        continue;
+
+                    errorMsg = $"{row.GroupTitle} : {detail.RoleLabel} not selected";
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void LoadConfig(ChartComponentConfig source)
+        {
+            return;
+        }
+
+        public void SeriesColorChanged(object obj)
+        {
+            return;
+        }
+        #endregion
+
+        #region Internal Logic
+        private void InitializeCommands()
+        {
+            AddTargetRowCommand = new DelegateCommand(AddTargetRow);
+            RemoveSelectedTargetRowCommand = new DelegateCommand(RemoveSelectedTargetRow);
+            ClearSelectedDetailCommand = new DelegateCommand(ClearSelectedDetail);
+            DeleteTargetRowCommand = new DelegateCommand<TargetRow>(DeleteTargetRow);
+            RemoveDetailCommand = new DelegateCommand<DetailItem>(RemoveDetail);
+            MoveDetailUpCommand = new DelegateCommand<DetailItem>(MoveDetailUp);
+            MoveDetailDownCommand = new DelegateCommand<DetailItem>(MoveDetailDown);
+            SelectDetailCommand = new DelegateCommand<DetailItem>(SelectDetail);
+        }
+
+        private void InitializeState()
         {
             TargetRows = new ObservableCollection<TargetRow>();
             LineSeriesTypeList = Enum
@@ -123,25 +288,38 @@ namespace WpfGridFifoPrototype.ViewModels
             AddTargetRow();
         }
 
-        private void AddTargetRow(int no, string label)
+        private void DeleteTargetRow(TargetRow row)
         {
-            var uniqueColor = _chartColorService.GenerateUniqueColor(TargetRows);
+            RemoveTargetRow(row);
+        }
+
+        private void MoveDetailUp(DetailItem detail)
+        {
+            MoveDetail(detail, -1);
+        }
+
+        private void MoveDetailDown(DetailItem detail)
+        {
+            MoveDetail(detail, 1);
+        }
+
+        private TargetRow CreateTargetRow(int no, string groupTitle)
+        {
             var row = new TargetRow
             {
                 No = no,
-                GroupTitle = label,
-                Color = uniqueColor,
+                GroupTitle = groupTitle,
+                Color = _chartColorService.GenerateUniqueColor(TargetRows),
                 LineSeriesType = LineSeriesType.Line
             };
 
             InitializeSlots(row);
-            TargetRows.Add(row);
-            SelectedTargetRow = row;
+            return row;
         }
 
         private void InitializeSlots(TargetRow row)
         {
-            for (int i = 0; i < DimensionMode; i++)
+            for (int index = 0; index < DimensionMode; index++)
                 row.Details.Add(new DetailItem());
 
             UpdateRoleAndStatus(row);
@@ -149,21 +327,15 @@ namespace WpfGridFifoPrototype.ViewModels
 
         private void UpdateRoleAndStatus(TargetRow row)
         {
-            for (int i = 0; i < row.Details.Count; i++)
+            for (int index = 0; index < row.Details.Count; index++)
             {
-                row.Details[i].RoleLabel = i < _roleLabels.Length ? _roleLabels[i] : $"D{i + 1}";
-                row.Details[i].CanMoveUp = i > 0;
-                row.Details[i].CanMoveDown = i < row.Details.Count - 1;
+                row.Details[index].RoleLabel = index < _roleLabels.Length ? _roleLabels[index] : $"D{index + 1}";
+                row.Details[index].CanMoveUp = index > 0;
+                row.Details[index].CanMoveDown = index < row.Details.Count - 1;
             }
         }
 
-        public void AddTargetRow()
-        {
-            int nextNo = TargetRows.Any() ? TargetRows.Max(r => r.No) + 1 : 1;
-            AddTargetRow(nextNo, $"New Group {nextNo}");
-        }
-
-        public void AddToTarget(UserAnalItemData source)
+        private void AddOrReplaceDetailFromSource(UserAnalItemData source)
         {
             if (source == null)
                 return;
@@ -171,137 +343,136 @@ namespace WpfGridFifoPrototype.ViewModels
             if (SelectedTargetRow == null)
             {
                 MessageBox.Show(
-                    "데이터를 추가할 타겟 그룹이 없습니다. 먼저 로우를 추가하세요.",
-                    "경고",
+                    "No target row is selected. Add a row before assigning data.",
+                    "Information",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
                 return;
             }
 
             var details = SelectedTargetRow.Details;
-
-            if (details.Any(item => !string.IsNullOrEmpty(item.QualifiedName) && item.QualifiedName == source.QualifiedName))
+            bool alreadyExists = details.Any(item => !string.IsNullOrEmpty(item.QualifiedName) && item.QualifiedName == source.QualifiedName);
+            if (alreadyExists)
                 return;
 
-            DetailItem targetSlot = null;
-
-            if (SelectedDetail != null && details.Contains(SelectedDetail))
-                targetSlot = SelectedDetail;
-
-            if (targetSlot == null || !targetSlot.IsEmpty)
-                targetSlot = details.FirstOrDefault(detail => detail.IsEmpty);
-
+            var targetSlot = ResolveTargetSlotForAdd(details);
             if (targetSlot == null)
-                targetSlot = details.OrderBy(detail => detail.InsertTimestamp).First();
+                return;
 
             targetSlot.UpdateFromSource(source);
             UpdateRoleAndStatus(SelectedTargetRow);
-            SelectedDetail = targetSlot;
+            ApplySelectionToRow(SelectedTargetRow, targetSlot);
         }
 
-        public void RemoveSelectedTargetRow()
+        private void ClearDetailCore(DetailItem detail, bool clearSelectionAfter)
         {
-            if (SelectedTargetRow == null)
+            if (detail == null)
                 return;
 
-            TargetRows.Remove(SelectedTargetRow);
-            SelectedTargetRow = TargetRows.FirstOrDefault();
-            if (SelectedTargetRow == null)
-                SetSelectedDetailCore(null);
+            var ownerRow = FindOwnerRow(detail);
+            var selectionSnapshot = CaptureSelectionSnapshot(ownerRow);
+
+            detail.Clear();
+
+            if (!selectionSnapshot.ShouldApply)
+                return;
+
+            var nextDetail = clearSelectionAfter ? null : selectionSnapshot.SelectedDetailInRow;
+            ApplySelectionToRow(ownerRow, nextDetail);
         }
 
-        public bool ValidateAssignments(out string errorMsg)
+        private void MoveDetailCore(DetailItem detail, int direction)
         {
-            errorMsg = string.Empty;
+            if (detail == null)
+                return;
 
-            foreach (var row in TargetRows)
+            var ownerRow = FindOwnerRow(detail);
+            if (ownerRow == null)
+                return;
+
+            int oldIndex = ownerRow.Details.IndexOf(detail);
+            int newIndex = oldIndex + direction;
+            if (newIndex < 0 || newIndex >= ownerRow.Details.Count)
+                return;
+
+            var targetSlot = ownerRow.Details[newIndex];
+            var selectionSnapshot = CaptureSelectionSnapshot(ownerRow);
+            var nextDetail = ResolveSelectedDetailAfterSwap(selectionSnapshot.SelectedDetailInRow, detail, targetSlot);
+
+            detail.SwapPayloadWith(targetSlot);
+
+            if (!selectionSnapshot.ShouldApply)
+                return;
+
+            ApplySelectionToRow(ownerRow, nextDetail);
+        }
+
+        private DetailItem ResolveTargetSlotForAdd(IList<DetailItem> details)
+        {
+            if (details == null || details.Count == 0)
+                return null;
+
+            var selectedSlot = SelectedDetail != null && details.Contains(SelectedDetail)
+                ? SelectedDetail
+                : null;
+
+            if (selectedSlot != null && selectedSlot.IsEmpty)
+                return selectedSlot;
+
+            var emptySlot = details.FirstOrDefault(detail => detail.IsEmpty);
+            if (emptySlot != null)
+                return emptySlot;
+
+            if (selectedSlot != null)
+                return selectedSlot;
+
+            return details
+                .OrderBy(detail => detail.InsertTimestamp)
+                .FirstOrDefault();
+        }
+
+        private SelectionSnapshot CaptureSelectionSnapshot(TargetRow row)
+        {
+            if (row == null)
+                return SelectionSnapshot.None;
+
+            bool hasSelectedDetailInRow = SelectedDetail != null && ReferenceEquals(FindOwnerRow(SelectedDetail), row);
+            if (hasSelectedDetailInRow)
+                return new SelectionSnapshot(true, SelectedDetail);
+
+            bool hasSelectedRowOnly = ReferenceEquals(SelectedTargetRow, row) && SelectedDetail == null;
+            if (hasSelectedRowOnly)
+                return new SelectionSnapshot(true, null);
+
+            return SelectionSnapshot.None;
+        }
+
+        private DetailItem ResolveSelectedDetailAfterSwap(DetailItem currentSelection, DetailItem sourceSlot, DetailItem targetSlot)
+        {
+            if (currentSelection == null)
+                return null;
+
+            if (ReferenceEquals(currentSelection, sourceSlot))
+                return targetSlot;
+
+            if (ReferenceEquals(currentSelection, targetSlot))
+                return sourceSlot;
+
+            return currentSelection;
+        }
+
+        private void ApplySelectionToRow(TargetRow row, DetailItem detail)
+        {
+            if (row != null && !ReferenceEquals(SelectedTargetRow, row))
+                SelectedTargetRow = row;
+
+            if (detail == null)
             {
-                foreach (var detail in row.Details)
-                {
-                    if (!detail.IsEmpty)
-                        continue;
-
-                    errorMsg = $"{row.GroupTitle} : {detail.RoleLabel} 미 선택";
-                    return false;
-                }
+                SetSelectedDetailCore(null);
+                return;
             }
 
-            return true;
-        }
-
-        public void LoadConfig(ChartComponentConfig source)
-        {
-            return;
-        }
-
-        public void SeriesColorChanged(object obj)
-        {
-            return;
-        }
-
-        private void DeleteTargetRow(TargetRow row)
-        {
-            if (row == null)
-                return;
-
-            bool removedSelectedRow = ReferenceEquals(SelectedTargetRow, row);
-            bool removedSelectedDetail = SelectedDetail != null && row.Details.Contains(SelectedDetail);
-
-            TargetRows.Remove(row);
-
-            if (!removedSelectedRow && !removedSelectedDetail)
-                return;
-
-            SelectedTargetRow = TargetRows.FirstOrDefault();
-            if (SelectedTargetRow == null)
-                SetSelectedDetailCore(null);
-        }
-
-        private void RemoveDetail(DetailItem detail)
-        {
-            if (detail == null)
-                return;
-
             SelectedDetail = detail;
-            detail.Clear();
-        }
-
-        private void MoveDetailUp(DetailItem item) => MoveItem(item, -1);
-
-        private void MoveDetailDown(DetailItem item) => MoveItem(item, 1);
-
-        private void MoveItem(DetailItem item, int direction)
-        {
-            if (item == null)
-                return;
-
-            var row = FindOwnerRow(item);
-            if (row == null)
-                return;
-
-            int oldIndex = row.Details.IndexOf(item);
-            int newIndex = oldIndex + direction;
-
-            if (newIndex < 0 || newIndex >= row.Details.Count)
-                return;
-
-            var targetSlot = row.Details[newIndex];
-            item.SwapPayloadWith(targetSlot);
-
-            SelectedDetail = targetSlot;
-        }
-
-        private void SelectDetail(DetailItem detail)
-        {
-            if (detail == null)
-                return;
-
-            SelectedDetail = detail;
-        }
-
-        private void ClearSelectedDetail()
-        {
-            SetSelectedDetailCore(null);
         }
 
         private void SetSelectedDetailCore(DetailItem detail)
@@ -325,6 +496,22 @@ namespace WpfGridFifoPrototype.ViewModels
                 return null;
 
             return TargetRows.FirstOrDefault(row => row.Details.Contains(detail));
+        }
+        #endregion
+
+        private sealed class SelectionSnapshot
+        {
+            public static readonly SelectionSnapshot None = new SelectionSnapshot(false, null);
+
+            public SelectionSnapshot(bool shouldApply, DetailItem selectedDetailInRow)
+            {
+                ShouldApply = shouldApply;
+                SelectedDetailInRow = selectedDetailInRow;
+            }
+
+            public bool ShouldApply { get; }
+
+            public DetailItem SelectedDetailInRow { get; }
         }
     }
 }
