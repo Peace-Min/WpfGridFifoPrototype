@@ -16,35 +16,35 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="GroupCellBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="True">
+                    <Setter Property="Background" Value="#ECFDF5" />
+                    <Setter Property="BorderBrush" Value="#BBF7D0" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="DetailCellBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#CBD5E1" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Opacity" Value="1" />
             <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="True">
+                    <Setter Property="Background" Value="#F0FDF4" />
+                    <Setter Property="BorderBrush" Value="#BBF7D0" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding IsEmpty}" Value="True">
-                    <Setter Property="Opacity" Value="0.45" />
+                    <Setter Property="Opacity" Value="0.35" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                     <Setter Property="Background" Value="#DBEAFE" />
                     <Setter Property="BorderBrush" Value="#2563EB" />
                     <Setter Property="Opacity" Value="1" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="AxisTextStyle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#475569" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding RoleLabel}" Value="X">
-                    <Setter Property="Foreground" Value="#10B981" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding RoleLabel}" Value="Y">
-                    <Setter Property="Foreground" Value="#F43F5E" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding RoleLabel}" Value="Z">
-                    <Setter Property="Foreground" Value="#FFBB00" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -78,7 +78,13 @@
                     <dxg:GridColumn Header="순번" Width="45" HorizontalHeaderContentAlignment="Center">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock HorizontalAlignment="Center" Text="{Binding RowData.Row.No}" />
+                                <Border Style="{StaticResource GroupCellBorderStyle}">
+                                    <dxmvvm:Interaction.Behaviors>
+                                        <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                               Command="{Binding DataContext.ClearSelectedDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                    </dxmvvm:Interaction.Behaviors>
+                                    <TextBlock Text="{Binding RowData.Row.No}" HorizontalAlignment="Center" />
+                                </Border>
                             </DataTemplate>
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>
@@ -88,43 +94,62 @@
                     <dxg:GridColumn Header="그룹명" Width="130" HorizontalHeaderContentAlignment="Center">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBox Text="{Binding RowData.Row.GroupTitle}"
-                                         Background="Transparent"
-                                         BorderBrush="Transparent"
-                                         TextAlignment="Left" />
+                                <Border Style="{StaticResource GroupCellBorderStyle}">
+                                    <TextBox Text="{Binding RowData.Row.GroupTitle}"
+                                             Background="Transparent"
+                                             BorderBrush="Transparent"
+                                             TextAlignment="Left">
+                                        <dxmvvm:Interaction.Behaviors>
+                                            <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                   Command="{Binding DataContext.ClearSelectedDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                        </dxmvvm:Interaction.Behaviors>
+                                    </TextBox>
+                                </Border>
                             </DataTemplate>
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>
                 </dxg:GridControlBand>
 
                 <dxg:GridControlBand Header="그룹 정보" HorizontalHeaderContentAlignment="Center">
-                    <dxg:GridColumn Header="축" Width="120" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="축" ReadOnly="True" AllowEditing="False" Width="90" HorizontalHeaderContentAlignment="Center">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource DetailCellBorderStyle}">
+                                            <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
                                                 <dxmvvm:Interaction.Behaviors>
                                                     <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
                                                                            Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                            CommandParameter="{Binding}" />
                                                 </dxmvvm:Interaction.Behaviors>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Width="20"
-                                                               Margin="0,0,8,0"
-                                                               VerticalAlignment="Center"
-                                                               Text="{Binding RoleLabel}"
-                                                               Style="{StaticResource AxisTextStyle}" />
+                                                    <TextBox Text="{Binding RoleLabel}" IsReadOnly="True" Background="Transparent" BorderBrush="Transparent" Padding="7,3">
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RoleLabel}" Value="X">
+                                                                        <Setter Property="Foreground" Value="#10B981" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding RoleLabel}" Value="Y">
+                                                                        <Setter Property="Foreground" Value="#F43F5E" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding RoleLabel}" Value="Z">
+                                                                        <Setter Property="Foreground" Value="#FFBB00" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                    </TextBox>
                                                     <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                                         <Button Width="20"
                                                                 Height="20"
-                                                                Margin="0,0,2,0"
                                                                 Padding="0"
+                                                                Margin="0,0,2,0"
                                                                 Visibility="{Binding CanMoveUp, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                                 Command="{Binding DataContext.MoveDetailUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
-                                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="▲" />
+                                                            <TextBlock Text="▲" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                         </Button>
                                                         <Button Width="20"
                                                                 Height="20"
@@ -132,7 +157,7 @@
                                                                 Visibility="{Binding CanMoveDown, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                                 Command="{Binding DataContext.MoveDetailDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
-                                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="▼" />
+                                                            <TextBlock Text="▼" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                         </Button>
                                                     </StackPanel>
                                                 </StackPanel>
@@ -150,17 +175,13 @@
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource DetailCellBorderStyle}">
+                                            <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
                                                 <dxmvvm:Interaction.Behaviors>
                                                     <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
                                                                            Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                            CommandParameter="{Binding}" />
                                                 </dxmvvm:Interaction.Behaviors>
-                                                <TextBox Text="{Binding ObjectLabel}"
-                                                         Background="Transparent"
-                                                         BorderBrush="Transparent"
-                                                         IsReadOnly="True"
-                                                         TextAlignment="Left" />
+                                                <TextBox Text="{Binding ObjectLabel}" Background="Transparent" BorderBrush="Transparent" TextAlignment="Left" IsReadOnly="True" />
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -175,17 +196,13 @@
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource DetailCellBorderStyle}">
+                                            <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
                                                 <dxmvvm:Interaction.Behaviors>
                                                     <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
                                                                            Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                            CommandParameter="{Binding}" />
                                                 </dxmvvm:Interaction.Behaviors>
-                                                <TextBox Text="{Binding AttributeLabel}"
-                                                         Background="Transparent"
-                                                         BorderBrush="Transparent"
-                                                         IsReadOnly="True"
-                                                         TextAlignment="Left" />
+                                                <TextBox Text="{Binding AttributeLabel}" Background="Transparent" BorderBrush="Transparent" TextAlignment="Left" IsReadOnly="True" />
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -200,23 +217,20 @@
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource DetailCellBorderStyle}">
+                                            <Border Style="{StaticResource DetailCellBorderStyle}" Cursor="Hand">
                                                 <dxmvvm:Interaction.Behaviors>
                                                     <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
                                                                            Command="{Binding DataContext.SelectDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                            CommandParameter="{Binding}" />
                                                 </dxmvvm:Interaction.Behaviors>
                                                 <Grid>
-                                                    <TextBlock Margin="4,0,26,0"
-                                                               VerticalAlignment="Center"
-                                                               Text="{Binding DisplayUnit}" />
-                                                    <Button Width="22"
-                                                            Height="22"
+                                                    <TextBlock Text="{Binding DisplayUnit}" Margin="10,0,24,0" VerticalAlignment="Center" />
+                                                    <Button Content="✕"
+                                                            Cursor="Hand"
+                                                            Margin="0"
                                                             HorizontalAlignment="Right"
                                                             Background="Transparent"
                                                             BorderThickness="0"
-                                                            Content="✕"
-                                                            Cursor="Hand"
                                                             Command="{Binding DataContext.RemoveDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
                                                         <Button.Style>
@@ -240,25 +254,41 @@
                 </dxg:GridControlBand>
 
                 <dxg:GridControlBand Header=" " HorizontalHeaderContentAlignment="Center" OverlayHeaderByChildren="True">
-                    <dxg:GridColumn Header="선 그래프 종류" Width="120" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="선 그래프 종류" HorizontalHeaderContentAlignment="Center" ReadOnly="True" AllowEditing="False" Width="120">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
-                                <ComboBox HorizontalContentAlignment="Center"
-                                          VerticalContentAlignment="Center"
-                                          DisplayMemberPath="Value"
-                                          SelectedValuePath="Key"
-                                          SelectedValue="{Binding RowData.Row.LineSeriesType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                          ItemsSource="{Binding DataContext.LineSeriesTypeList, RelativeSource={RelativeSource AncestorType=dxg:GridControl}}" />
+                                <Border Style="{StaticResource GroupCellBorderStyle}">
+                                    <ComboBox IsReadOnly="True"
+                                              Background="Transparent"
+                                              HorizontalContentAlignment="Center"
+                                              VerticalContentAlignment="Center"
+                                              DisplayMemberPath="Value"
+                                              SelectedValuePath="Key"
+                                              SelectedValue="{Binding RowData.Row.LineSeriesType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              ItemsSource="{Binding DataContext.LineSeriesTypeList, RelativeSource={RelativeSource AncestorType=dxg:GridControl}}">
+                                        <dxmvvm:Interaction.Behaviors>
+                                            <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                   Command="{Binding DataContext.ClearSelectedDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                        </dxmvvm:Interaction.Behaviors>
+                                    </ComboBox>
+                                </Border>
                             </DataTemplate>
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>
                 </dxg:GridControlBand>
 
                 <dxg:GridControlBand Header=" " HorizontalHeaderContentAlignment="Center" OverlayHeaderByChildren="True">
-                    <dxg:GridColumn Header="색상" Width="100" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="색상" ReadOnly="True" AllowEditing="False" Width="100" HorizontalHeaderContentAlignment="Center">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
-                                <dxe:PopupColorEdit Color="{Binding RowData.Row.Color, Mode=TwoWay}" />
+                                <Border Style="{StaticResource GroupCellBorderStyle}">
+                                    <dxe:PopupColorEdit Color="{Binding RowData.Row.Color}">
+                                        <dxmvvm:Interaction.Behaviors>
+                                            <dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+                                                                   Command="{Binding DataContext.ClearSelectedDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                        </dxmvvm:Interaction.Behaviors>
+                                    </dxe:PopupColorEdit>
+                                </Border>
                             </DataTemplate>
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using DevExpress.Mvvm;
 using WpfGridFifoPrototype.Models;
+using WpfGridFifoPrototype.PrototypeSupport;
 
 namespace WpfGridFifoPrototype.ViewModels
 {
@@ -49,7 +50,7 @@ namespace WpfGridFifoPrototype.ViewModels
                 _isUpdatingSelection = true;
                 try
                 {
-                    SelectDefaultDetailForRow(value);
+                    SetSelectedDetailCore(null);
                 }
                 finally
                 {
@@ -97,6 +98,7 @@ namespace WpfGridFifoPrototype.ViewModels
 
         public DelegateCommand AddTargetRowCommand => new DelegateCommand(AddTargetRow);
         public DelegateCommand RemoveSelectedTargetRowCommand => new DelegateCommand(RemoveSelectedTargetRow);
+        public DelegateCommand ClearSelectedDetailCommand => new DelegateCommand(ClearSelectedDetail);
         public DelegateCommand<TargetRow> DeleteTargetRowCommand => new DelegateCommand<TargetRow>(DeleteTargetRow);
         public DelegateCommand<DetailItem> RemoveDetailCommand => new DelegateCommand<DetailItem>(RemoveDetail);
         public DelegateCommand<DetailItem> MoveDetailUpCommand => new DelegateCommand<DetailItem>(MoveDetailUp);
@@ -284,11 +286,7 @@ namespace WpfGridFifoPrototype.ViewModels
                 return;
 
             var targetSlot = row.Details[newIndex];
-            var sourceSnapshot = item.ToSnapshot();
-            var targetSnapshot = targetSlot.ToSnapshot();
-
-            targetSlot.ApplySnapshot(sourceSnapshot);
-            item.ApplySnapshot(targetSnapshot);
+            item.SwapPayloadWith(targetSlot);
 
             SelectedDetail = targetSlot;
         }
@@ -301,23 +299,14 @@ namespace WpfGridFifoPrototype.ViewModels
             SelectedDetail = detail;
         }
 
-        private void SelectDefaultDetailForRow(TargetRow row)
+        private void ClearSelectedDetail()
         {
-            if (row == null)
-            {
-                SetSelectedDetailCore(null);
-                return;
-            }
-
-            if (SelectedDetail != null && row.Details.Contains(SelectedDetail))
-                return;
-
-            SetSelectedDetailCore(row.Details.FirstOrDefault());
+            SetSelectedDetailCore(null);
         }
 
         private void SetSelectedDetailCore(DetailItem detail)
         {
-            var current = GetValue<DetailItem>();
+            var current = SelectedDetail;
             if (ReferenceEquals(current, detail))
                 return;
 

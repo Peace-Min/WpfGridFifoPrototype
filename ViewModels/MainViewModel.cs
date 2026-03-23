@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using DevExpress.Mvvm;
-using WpfGridFifoPrototype.Models;
+using WpfGridFifoPrototype.PrototypeSupport;
 
 namespace WpfGridFifoPrototype.ViewModels
 {
