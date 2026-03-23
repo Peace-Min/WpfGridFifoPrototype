@@ -13,21 +13,21 @@ namespace WpfGridFifoPrototype.Models
     public class DetailItem : BindableBase
     {
         private string _y;
-        public string Y 
-        { 
-            get => _y; 
-            set 
-            { 
-                if(SetProperty(ref _y, value, nameof(Y)))
-                    RaisePropertyChanged(nameof(IsEmpty)); // Y 변경 시 IsEmpty 갱신
-            } 
+        public string Y
+        {
+            get => _y;
+            set
+            {
+                if (SetProperty(ref _y, value, nameof(Y)))
+                    RaisePropertyChanged(nameof(IsEmpty));
+            }
         }
 
         private string _attr;
-        public string Attr 
-        { 
-            get => _attr; 
-            set => SetProperty(ref _attr, value, nameof(Attr)); 
+        public string Attr
+        {
+            get => _attr;
+            set => SetProperty(ref _attr, value, nameof(Attr));
         }
 
         public bool IsEmpty => string.IsNullOrEmpty(Y);
@@ -60,29 +60,35 @@ namespace WpfGridFifoPrototype.Models
             set => SetProperty(ref _insertTimestamp, value, nameof(InsertTimestamp));
         }
 
-        // 데이터 초기화 및 교체를 위한 유틸리티 메서드 추가
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value, nameof(IsSelected));
+        }
+
         public void ClearContent()
         {
             Y = null;
             Attr = null;
-            InsertTimestamp = 0; // 타임스탬프 리셋
+            InsertTimestamp = 0;
         }
 
         public void AssignFrom(DetailItem source)
         {
             Y = source.Y;
             Attr = source.Attr;
-            InsertTimestamp = source.InsertTimestamp; // 타임스탬프 원본 유지
+            InsertTimestamp = source.InsertTimestamp;
         }
     }
 
     public class TargetRow : BindableBase
     {
         private int _no;
-        public int No 
-        { 
-            get => _no; 
-            set => SetProperty(ref _no, value, nameof(No)); 
+        public int No
+        {
+            get => _no;
+            set => SetProperty(ref _no, value, nameof(No));
         }
 
         private string _label = "New Target";
@@ -93,12 +99,12 @@ namespace WpfGridFifoPrototype.Models
         }
 
         public ObservableCollection<DetailItem> Details { get; set; } = new ObservableCollection<DetailItem>();
-        
+
         private string _color;
-        public string Color 
-        { 
-            get => _color; 
-            set => SetProperty(ref _color, value, nameof(Color)); 
+        public string Color
+        {
+            get => _color;
+            set => SetProperty(ref _color, value, nameof(Color));
         }
     }
 }

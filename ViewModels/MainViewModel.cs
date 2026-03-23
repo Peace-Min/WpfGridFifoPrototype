@@ -11,18 +11,67 @@ namespace WpfGridFifoPrototype.ViewModels
     {
         public ObservableCollection<SourceItem> SourceItems { get; }
         public ObservableCollection<TargetRow> TargetRows { get; }
-        
-        // 차원 선택 옵션을 뷰모델에서 관리 (2차원, 3차원 한정)
         public ObservableCollection<int> ModeOptions { get; } = new ObservableCollection<int> { 2, 3 };
+
+        private readonly string[] _roleLabels = { "X", "Y", "Z" };
+        private bool _isUpdatingSelection;
 
         private TargetRow _selectedTargetRow;
         public TargetRow SelectedTargetRow
         {
             get => _selectedTargetRow;
-            set => SetProperty(ref _selectedTargetRow, value, nameof(SelectedTargetRow));
+            set
+            {
+                if (!SetProperty(ref _selectedTargetRow, value, nameof(SelectedTargetRow)))
+                    return;
+
+                if (_isUpdatingSelection)
+                    return;
+
+                _isUpdatingSelection = true;
+                try
+                {
+                    SelectDefaultDetailForRow(value);
+                }
+                finally
+                {
+                    _isUpdatingSelection = false;
+                }
+            }
         }
 
-        private int _dimensionMode = 2; // 기본 2D (X, Y)
+        private DetailItem _selectedDetail;
+        public DetailItem SelectedDetail
+        {
+            get => _selectedDetail;
+            set
+            {
+                if (ReferenceEquals(_selectedDetail, value))
+                    return;
+
+                SetSelectedDetailCore(value);
+
+                if (_isUpdatingSelection)
+                    return;
+
+                _isUpdatingSelection = true;
+                try
+                {
+                    SelectedTargetRow = FindOwningRow(value);
+                }
+                finally
+                {
+                    _isUpdatingSelection = false;
+                }
+            }
+        }
+
+        public int SelectedDetailIndex =>
+            SelectedTargetRow == null || SelectedDetail == null
+                ? -1
+                : SelectedTargetRow.Details.IndexOf(SelectedDetail);
+
+        private int _dimensionMode = 2;
         public int DimensionMode
         {
             get => _dimensionMode;
@@ -32,13 +81,15 @@ namespace WpfGridFifoPrototype.ViewModels
                     OnDimensionModeChanged();
             }
         }
-        
+
         public DelegateCommand<SourceItem> AddToTargetCommand { get; }
         public DelegateCommand<DetailItem> RemoveDetailCommand { get; }
         public DelegateCommand AddTargetRowCommand { get; }
         public DelegateCommand<TargetRow> DeleteTargetRowCommand { get; }
         public DelegateCommand<DetailItem> MoveDetailUpCommand { get; }
         public DelegateCommand<DetailItem> MoveDetailDownCommand { get; }
+        public DelegateCommand<DetailItem> SelectDetailCommand { get; }
+        public DelegateCommand SubmitOkCommand { get; }
 
         public MainViewModel()
         {
@@ -49,67 +100,60 @@ namespace WpfGridFifoPrototype.ViewModels
             SourceItems.Add(new SourceItem { Id = 2, Name = "PL-20", Attr = "Fuel Pressure" });
             SourceItems.Add(new SourceItem { Id = 3, Name = "AG-50", Attr = "Altitude Sensor" });
 
-            // 초기 뷰 설정: 시작 시에는 두 개의 로우(그룹)를 기본으로 둠
             AddTargetRow(1, "Main Monitor", "Active");
             AddTargetRow(2, "Sub Monitor", "Standby");
 
             AddToTargetCommand = new DelegateCommand<SourceItem>(AddToTarget);
             RemoveDetailCommand = new DelegateCommand<DetailItem>(RemoveDetail);
-            AddTargetRowCommand = new DelegateCommand(() => AddTargetRow()); // 인자 없는 오버로드 호출
+            AddTargetRowCommand = new DelegateCommand(AddTargetRow);
             DeleteTargetRowCommand = new DelegateCommand<TargetRow>(DeleteTargetRow);
             MoveDetailUpCommand = new DelegateCommand<DetailItem>(MoveDetailUp);
             MoveDetailDownCommand = new DelegateCommand<DetailItem>(MoveDetailDown);
+            SelectDetailCommand = new DelegateCommand<DetailItem>(SelectDetail);
+            SubmitOkCommand = new DelegateCommand(OnSubmitOk);
         }
 
         private void OnDimensionModeChanged()
         {
-            // [기획 반영] 차원(Dimension)이 변경될 때마다 혼선 방지를 위해 TargetRows 전체 클리어(초기화)
             TargetRows.Clear();
             SelectedTargetRow = null;
-
-            // 전체 클리어 후, 사용자가 바로 다시 추가할 수 있도록 빈 그룹 1개 기본 생성
+            SetSelectedDetailCore(null);
             AddTargetRow();
         }
 
-        /// <summary>
-        /// 새로운 빈 타겟 로우를 추가할 때 사용
-        /// </summary>
         private void AddTargetRow()
         {
             int nextNo = TargetRows.Any() ? TargetRows.Max(r => r.No) + 1 : 1;
             AddTargetRow(nextNo, $"New Group {nextNo}", "Standby");
         }
 
-        /// <summary>
-        /// 지정된 속성으로 타겟 로우를 생성하여 추가
-        /// </summary>
         private void AddTargetRow(int no, string label, string color)
         {
-            var row = new TargetRow { No = no, Label = label, Color = color };
+            var row = new TargetRow
+            {
+                No = no,
+                Label = label,
+                Color = color
+            };
+
             InitializeSlots(row);
             TargetRows.Add(row);
-            
-            // 새 그룹 추가 시 해당 그룹으로 자동 포커스
             SelectedTargetRow = row;
         }
 
         private void InitializeSlots(TargetRow row)
         {
-            // 현재 설정된 차원(DimensionMode)만큼 슬롯을 생성
             for (int i = 0; i < DimensionMode; i++)
-            {
                 row.Details.Add(new DetailItem());
-            }
+
             UpdateRoleAndStatus(row);
         }
 
         private void UpdateRoleAndStatus(TargetRow row)
         {
-            // 최대 3차원 (X, Y, Z) 기반 확정 배열
-            string[] labels = { "X", "Y", "Z" }; 
             for (int i = 0; i < row.Details.Count; i++)
             {
-                row.Details[i].RoleLabel = labels[i]; // DimensionMode가 최대 3이므로 IndexError 발생 안함
+                row.Details[i].RoleLabel = i < _roleLabels.Length ? _roleLabels[i] : $"D{i + 1}";
                 row.Details[i].CanMoveUp = i > 0;
                 row.Details[i].CanMoveDown = i < row.Details.Count - 1;
             }
@@ -117,36 +161,40 @@ namespace WpfGridFifoPrototype.ViewModels
 
         private void AddToTarget(SourceItem source)
         {
-            if (source == null) return;
-            
-            // 엣지 케이스 방어: 타겟 로우 미존재 시 피드백 제공
+            if (source == null)
+                return;
+
             if (SelectedTargetRow == null)
             {
-                MessageBox.Show("데이터를 추가할 타겟(모니터링 대상) 그룹이 없습니다.\n'로우 추가' 버튼을 눌러 그룹을 먼저 생성해주세요.", 
-                                "경고", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    "Select a target group before adding a source item.",
+                    "Info",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
                 return;
             }
 
             var details = SelectedTargetRow.Details;
-            
-            // 1. 빈 슬롯 우선 탐색
-            var targetSlot = details.FirstOrDefault(d => d.IsEmpty);
-            
-            // 2. 빈 곳이 없다면 타임스탬프가 가장 작은(오래된) 슬롯을 LINQ로 탐색
-            if (targetSlot == null)
-            {
-                targetSlot = details.OrderBy(d => d.InsertTimestamp).First();
-            }
+            DetailItem targetSlot = null;
 
-            // 3. 찾은 슬롯에 데이터 반영
+            if (SelectedDetail != null && details.Contains(SelectedDetail))
+                targetSlot = SelectedDetail;
+
+            if (targetSlot == null)
+                targetSlot = details.FirstOrDefault(d => d.IsEmpty);
+
+            if (targetSlot == null)
+                targetSlot = details.OrderBy(d => d.InsertTimestamp).First();
+
             UpdateSlot(targetSlot, source);
             UpdateRoleAndStatus(SelectedTargetRow);
+            SelectedDetail = targetSlot;
         }
 
         private void UpdateSlot(DetailItem item, SourceItem source)
         {
-            // 방어 로직: 기존 값과 완전히 동일하면 불필요한 갱신 방지
-            if (item.Y == source.Name && item.Attr == source.Attr) return;
+            if (item.Y == source.Name && item.Attr == source.Attr)
+                return;
 
             item.Y = source.Name;
             item.Attr = source.Attr;
@@ -155,50 +203,143 @@ namespace WpfGridFifoPrototype.ViewModels
 
         private void MoveItem(DetailItem item, int direction)
         {
-            if (item == null) return;
-            var row = TargetRows.FirstOrDefault(r => r.Details.Contains(item));
-            if (row == null) return;
+            if (item == null)
+                return;
 
-            int oldIdx = row.Details.IndexOf(item);
-            int newIdx = oldIdx + direction;
+            var row = FindOwningRow(item);
+            if (row == null)
+                return;
 
-            if (newIdx >= 0 && newIdx < row.Details.Count)
-            {
-                var targetSlot = row.Details[newIdx];
+            int oldIndex = row.Details.IndexOf(item);
+            int newIndex = oldIndex + direction;
 
-                // 새로운 인스턴스를 만들지 않고 내부 데이터만 안전하게 교환(Swap)
-                string tempY = targetSlot.Y;
-                string tempAttr = targetSlot.Attr;
-                long tempTimestamp = targetSlot.InsertTimestamp;
+            if (newIndex < 0 || newIndex >= row.Details.Count)
+                return;
 
-                targetSlot.Y = item.Y;
-                targetSlot.Attr = item.Attr;
-                targetSlot.InsertTimestamp = item.InsertTimestamp;
+            var targetSlot = row.Details[newIndex];
 
-                item.Y = tempY;
-                item.Attr = tempAttr;
-                item.InsertTimestamp = tempTimestamp;
-            }
+            string tempY = targetSlot.Y;
+            string tempAttr = targetSlot.Attr;
+            long tempTimestamp = targetSlot.InsertTimestamp;
+
+            targetSlot.Y = item.Y;
+            targetSlot.Attr = item.Attr;
+            targetSlot.InsertTimestamp = item.InsertTimestamp;
+
+            item.Y = tempY;
+            item.Attr = tempAttr;
+            item.InsertTimestamp = tempTimestamp;
         }
 
         private void MoveDetailUp(DetailItem item) => MoveItem(item, -1);
+
         private void MoveDetailDown(DetailItem item) => MoveItem(item, 1);
+
+        private void SelectDetail(DetailItem detail)
+        {
+            if (detail == null)
+                return;
+
+            SelectedDetail = detail;
+        }
 
         private void RemoveDetail(DetailItem detail)
         {
-            if (detail == null) return;
-            // 인스턴스 덮어씌움 방지 - 값만 Clear 처리
+            if (detail == null)
+                return;
+
+            SelectedDetail = detail;
             detail.ClearContent();
         }
 
         private void DeleteTargetRow(TargetRow row)
         {
-            if (row != null) 
+            if (row == null)
+                return;
+
+            bool removedSelectedRow = ReferenceEquals(SelectedTargetRow, row);
+            bool removedSelectedDetail = SelectedDetail != null && row.Details.Contains(SelectedDetail);
+
+            TargetRows.Remove(row);
+
+            if (removedSelectedRow || removedSelectedDetail)
             {
-                TargetRows.Remove(row);
-                // 엣지 케이스 방어: 삭제 후 미아현상을 막기 위해 첫 번째 항목(없으면 null) 수동 포커싱 
                 SelectedTargetRow = TargetRows.FirstOrDefault();
+                if (SelectedTargetRow == null)
+                    SetSelectedDetailCore(null);
             }
+        }
+
+        private void OnSubmitOk()
+        {
+            if (!ValidateAssignments())
+                return;
+
+            MessageBox.Show(
+                "All assignments are complete.",
+                "Success",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        private bool ValidateAssignments()
+        {
+            foreach (var row in TargetRows)
+            {
+                foreach (var detail in row.Details)
+                {
+                    if (!detail.IsEmpty)
+                        continue;
+
+                    MessageBox.Show(
+                        $"{row.Label} : ({detail.RoleLabel}) is empty.",
+                        "Validation Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void SelectDefaultDetailForRow(TargetRow row)
+        {
+            if (row == null)
+            {
+                SetSelectedDetailCore(null);
+                return;
+            }
+
+            if (SelectedDetail != null && row.Details.Contains(SelectedDetail))
+                return;
+
+            SetSelectedDetailCore(row.Details.FirstOrDefault());
+        }
+
+        private void SetSelectedDetailCore(DetailItem detail)
+        {
+            if (ReferenceEquals(_selectedDetail, detail))
+                return;
+
+            if (_selectedDetail != null)
+                _selectedDetail.IsSelected = false;
+
+            _selectedDetail = detail;
+
+            if (_selectedDetail != null)
+                _selectedDetail.IsSelected = true;
+
+            RaisePropertyChanged(nameof(SelectedDetail));
+            RaisePropertyChanged(nameof(SelectedDetailIndex));
+        }
+
+        private TargetRow FindOwningRow(DetailItem detail)
+        {
+            if (detail == null)
+                return null;
+
+            return TargetRows.FirstOrDefault(row => row.Details.Contains(detail));
         }
     }
 }
