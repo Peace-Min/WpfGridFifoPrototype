@@ -48,18 +48,6 @@
             <Setter Property="Background" Value="White" />
             <Setter Property="Opacity" Value="1" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.Focused}">
-                    <Setter Property="Background" Value="#F0FDF4" />
-                    <Setter Property="BorderBrush" Value="#BBF7D0" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.Selected}">
-                    <Setter Property="Background" Value="#F0FDF4" />
-                    <Setter Property="BorderBrush" Value="#BBF7D0" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding SelectionState, RelativeSource={RelativeSource AncestorType=dxg:RowControl}}" Value="{x:Static dxg:SelectionState.FocusedAndSelected}">
-                    <Setter Property="Background" Value="#F0FDF4" />
-                    <Setter Property="BorderBrush" Value="#BBF7D0" />
-                </DataTrigger>
                 <DataTrigger Binding="{Binding IsEmpty}" Value="True">
                     <Setter Property="Opacity" Value="0.35" />
                 </DataTrigger>
@@ -68,6 +56,21 @@
                     <Setter Property="BorderBrush" Value="#2563EB" />
                     <Setter Property="Opacity" Value="1" />
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TransparentDetailGridCellStyle" TargetType="dxg:LightweightCellEditor">
+            <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <Trigger Property="SelectionState" Value="Focused">
+                    <Setter Property="Background" Value="Transparent" />
+                </Trigger>
+                <Trigger Property="SelectionState" Value="Selected">
+                    <Setter Property="Background" Value="Transparent" />
+                </Trigger>
+                <Trigger Property="SelectionState" Value="FocusedAndSelected">
+                    <Setter Property="Background" Value="Transparent" />
+                </Trigger>
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
@@ -92,6 +95,7 @@
                                AllowBandResizing="False"
                                ShowIndicator="False"
                                NavigationStyle="Cell"
+                               ShowFocusedRectangle="False"
                                RowStyle="{StaticResource TargetRowStyle}" />
             </dxg:GridControl.View>
 
@@ -133,7 +137,7 @@
                 </dxg:GridControlBand>
 
                 <dxg:GridControlBand Header="그룹 정보" HorizontalHeaderContentAlignment="Center">
-                    <dxg:GridColumn Header="축" ReadOnly="True" AllowEditing="False" Width="90" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="축" ReadOnly="True" AllowEditing="False" Width="90" HorizontalHeaderContentAlignment="Center" CellStyle="{StaticResource TransparentDetailGridCellStyle}">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
@@ -191,7 +195,7 @@
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>
 
-                    <dxg:GridColumn Header="객체명" Width="150" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="객체명" Width="150" HorizontalHeaderContentAlignment="Center" CellStyle="{StaticResource TransparentDetailGridCellStyle}">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
@@ -213,7 +217,7 @@
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>
 
-                    <dxg:GridColumn Header="속성명" Width="150" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="속성명" Width="150" HorizontalHeaderContentAlignment="Center" CellStyle="{StaticResource TransparentDetailGridCellStyle}">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
@@ -235,7 +239,7 @@
                         </dxg:GridColumn.CellTemplate>
                     </dxg:GridColumn>
 
-                    <dxg:GridColumn Header="단위" Width="120" HorizontalHeaderContentAlignment="Center">
+                    <dxg:GridColumn Header="단위" Width="120" HorizontalHeaderContentAlignment="Center" CellStyle="{StaticResource TransparentDetailGridCellStyle}">
                         <dxg:GridColumn.CellTemplate>
                             <DataTemplate>
                                 <ItemsControl ItemsSource="{Binding RowData.Row.Details}">
