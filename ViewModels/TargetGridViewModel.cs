@@ -15,6 +15,7 @@ namespace WpfGridFifoPrototype.ViewModels
         #region Construction
         private readonly ChartColorService _chartColorService = new ChartColorService();
         private readonly string[] _roleLabels = { "X", "Y", "Z" };
+        private readonly ObservableCollection<DetailItem> _selectedDetails = new ObservableCollection<DetailItem>();
         private bool _isUpdatingSelection;
         private int _dimensionMode = 2;
 
@@ -153,7 +154,19 @@ namespace WpfGridFifoPrototype.ViewModels
 
         public void RemoveSelectedTargetRow()
         {
-            RemoveTargetRow(SelectedTargetRow);
+            var rowsToRemove = _selectedDetails
+                .Select(FindOwnerRow)
+                .Where(row => row != null)
+                .Distinct()
+                .ToList();
+
+            if (rowsToRemove.Count == 0 && SelectedTargetRow != null)
+                rowsToRemove.Add(SelectedTargetRow);
+
+            foreach (var row in rowsToRemove)
+                RemoveTargetRow(row);
+
+            ClearSelectedDetailsCache();
         }
 
         public void RemoveTargetRow(TargetRow row)
@@ -170,6 +183,7 @@ namespace WpfGridFifoPrototype.ViewModels
                 return;
 
             SelectedTargetRow = TargetRows.FirstOrDefault();
+
             if (SelectedTargetRow == null)
                 SetSelectedDetailCore(null);
         }
@@ -219,11 +233,21 @@ namespace WpfGridFifoPrototype.ViewModels
             if (detail == null)
                 return;
 
+            if (RemoveSelectedDetailFromCache(detail))
+            {
+                if (ReferenceEquals(SelectedDetail, detail))
+                    SetSelectedDetailCore(_selectedDetails.LastOrDefault());
+
+                return;
+            }
+
+            AddSelectedDetailToCache(detail);
             SelectedDetail = detail;
         }
 
         public void ClearSelectedDetail()
         {
+            ClearSelectedDetailsCache();
             SetSelectedDetailCore(null);
         }
 
@@ -477,17 +501,33 @@ namespace WpfGridFifoPrototype.ViewModels
 
         private void SetSelectedDetailCore(DetailItem detail)
         {
-            var current = SelectedDetail;
-            if (ReferenceEquals(current, detail))
+            SetValue(detail, nameof(SelectedDetail));
+        }
+
+        private void AddSelectedDetailToCache(DetailItem detail)
+        {
+            if (detail == null || _selectedDetails.Contains(detail))
                 return;
 
-            if (current != null)
-                current.IsSelected = false;
+            _selectedDetails.Add(detail);
+            detail.IsSelected = true;
+        }
 
-            SetValue(detail, nameof(SelectedDetail));
+        private bool RemoveSelectedDetailFromCache(DetailItem detail)
+        {
+            if (detail == null || !_selectedDetails.Remove(detail))
+                return false;
 
-            if (detail != null)
-                detail.IsSelected = true;
+            detail.IsSelected = false;
+            return true;
+        }
+
+        private void ClearSelectedDetailsCache()
+        {
+            foreach (var detail in _selectedDetails.ToList())
+                detail.IsSelected = false;
+
+            _selectedDetails.Clear();
         }
 
         private TargetRow FindOwnerRow(DetailItem detail)
